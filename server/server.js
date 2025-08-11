@@ -9,16 +9,16 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-// ✅ Allow multiple origins (local + deployed)
+//  Allow multiple origins (local + deployed)
 const allowedOrigins = [
   "http://localhost:3000",
   process.env.FRONTEND_URL
 ];
 
-// ✅ Debug log
-console.log("🌐 Allowed origins:", allowedOrigins);
+// Debug log
+console.log("Allowed origins:", allowedOrigins);
 
-// ✅ Express CORS middleware
+//  Express CORS middleware
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -34,16 +34,16 @@ app.use(
 
 app.use(bodyParser.json());
 
-// ✅ Health check route
+// Health check route
 app.get("/", (req, res) => {
-  res.send("🟢 Backend is running");
+  res.send(" Backend is running");
 });
 
-// ✅ Routes
+// Routes
 const webhookRoutes = require("./routes/webhook");
 app.use("/webhook", webhookRoutes);
 
-// ✅ Socket.IO setup
+//  Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -54,26 +54,25 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-// ✅ MongoDB connection
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ MongoDB connected");
+    console.log("MongoDB connected");
     server.listen(process.env.PORT || 5000, () => {
-      console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
+      console.log(`Server running on port ${process.env.PORT || 5000}`);
     });
   })
-  .catch((err) => console.error("❌ MongoDB error:", err));
+  .catch((err) => console.error(" MongoDB error:", err));
 
-// ✅ Socket.IO events
 io.on("connection", (socket) => {
-  console.log("🟢 A user connected");
+  console.log(" A user connected");
 
   socket.on("typing", (wa_id) => {
     socket.broadcast.emit("user_typing", wa_id);
   });
 
   socket.on("disconnect", () => {
-    console.log("🔴 User disconnected");
+    console.log(" User disconnected");
   });
 });
