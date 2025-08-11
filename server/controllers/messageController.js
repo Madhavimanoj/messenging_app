@@ -7,28 +7,35 @@ exports.processPayload = async (req, res) => {
   try {
     if (data.type === "message") {
       const newMsg = new Message({
-  wa_id: data.wa_id,
-  name: data.name,
-  number: data.number,
-  message: data.message,
-  timestamp: new Date(data.timestamp),
-  status: "sent",
-  meta_msg_id: data.meta_msg_id,
-  direction: data.direction || "outgoing", 
-});
-
+        wa_id: data.wa_id,
+        name: data.name,
+        number: data.number,
+        message: data.message,
+        timestamp: new Date(data.timestamp),
+        status: "sent",
+        meta_msg_id: data.meta_msg_id,
+        direction: data.direction || "outgoing",
+      });
 
       await newMsg.save();
-      setTimeout(async () => {
-        newMsg.status = "delivered";
-        await newMsg.save();
 
-        if (io) io.emit("status_updated", newMsg);
-      }, 1000);
-
+      // Emit immediately
       if (io) io.emit("new_message", newMsg);
 
-      res.status(200).json({ success: true, message: "Message stored" });
+      // Simulate delivery after 1 second
+      setTimeout(() => {
+        Message.findByIdAndUpdate(
+          newMsg._id,
+          { status: "delivered" },
+          { new: true }
+        )
+          .then((updatedMsg) => {
+            if (io && updatedMsg) io.emit("status_updated", updatedMsg);
+          })
+          .catch((err) => console.error("Delivery update error:", err));
+      }, 1000);
+
+      return res.status(200).json({ success: true, message: "Message stored" });
 
     } else if (data.type === "status") {
       const updated = await Message.findOneAndUpdate(
@@ -39,15 +46,17 @@ exports.processPayload = async (req, res) => {
 
       if (updated) {
         if (io) io.emit("status_updated", updated);
-        res.status(200).json({ success: true, message: "Status updated" });
+        return res.status(200).json({ success: true, message: "Status updated" });
       } else {
-        res.status(404).json({ success: false, message: "Message not found" });
+        return res.status(404).json({ success: false, message: "Message not found" });
       }
+
     } else {
-      res.status(400).json({ success: false, message: "Unknown type" });
+      return res.status(400).json({ success: false, message: "Unknown type" });
     }
+
   } catch (err) {
-    console.error(" Server error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("❌ Server error in processPayload:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -7,18 +7,22 @@ const ChatWindow = ({ chat, typing }) => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
- const formatTime = (isoTime) => {
-  const time = new Date(isoTime?.$date || isoTime); 
-  return isNaN(time.getTime()) ? "Invalid Date" : time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
+  const formatTime = (isoTime) => {
+    const rawTime = isoTime?.$date || isoTime;
+    const time = new Date(rawTime);
+    return isNaN(time.getTime())
+      ? "Invalid Date"
+      : time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <>
-      {chat.messages.map((msg, index) => (
+      {chat?.messages?.map((msg, index) => (
         <div
           key={index}
-          className={`message-bubble ${msg.direction === "outgoing" ? "you" : "other"}`}
+          className={`message-bubble ${
+            msg.direction === "outgoing" ? "you" : "other"
+          }`}
         >
           <div>{msg.message}</div>
           <div className="timestamp">
@@ -31,6 +35,7 @@ const ChatWindow = ({ chat, typing }) => {
           </div>
         </div>
       ))}
+
       {typing && (
         <div className="typing-indicator">
           <em>Typing...</em>
@@ -38,8 +43,6 @@ const ChatWindow = ({ chat, typing }) => {
       )}
 
       <div ref={scrollRef} />
-      
-
     </>
   );
 };
