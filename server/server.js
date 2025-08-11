@@ -9,33 +9,49 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-// ✅ Use frontend URL from env or fallback
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+// ✅ Allow multiple origins (local + deployed)
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.FRONTEND_URL
+];
 
-// ✅ Socket.io CORS config
-const io = new Server(server, {
-  cors: {
-    origin: FRONTEND_URL,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+// ✅ Debug log
+console.log("🌐 Allowed origins:", allowedOrigins);
 
 // ✅ Express CORS middleware
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
 app.use(bodyParser.json());
 
+// ✅ Health check route
+app.get("/", (req, res) => {
+  res.send("🟢 Backend is running");
+});
+
 // ✅ Routes
 const webhookRoutes = require("./routes/webhook");
 app.use("/webhook", webhookRoutes);
 
-// ✅ Attach io to app
+// ✅ Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
 app.set("io", io);
 
 // ✅ MongoDB connection
@@ -49,7 +65,7 @@ mongoose
   })
   .catch((err) => console.error("❌ MongoDB error:", err));
 
-// ✅ Socket.io events
+// ✅ Socket.IO events
 io.on("connection", (socket) => {
   console.log("🟢 A user connected");
 
