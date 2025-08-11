@@ -4,8 +4,9 @@ import ChatWindow from "./components/ChatWindow";
 import "./App.css";
 import { io } from "socket.io-client";
 
-// ✅ Use NEXT_PUBLIC_ prefix for frontend env vars
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+
+const API_URL = process.env.REACT_APP_API_URL;
 
 // ✅ Initialize socket with correct URL
 const socket = io(API_URL, {
